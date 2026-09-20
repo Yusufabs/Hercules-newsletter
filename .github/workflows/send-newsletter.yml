@@ -1,0 +1,57 @@
+name: Send weekly newsletter
+
+# Assumed: "Thursday morning" = 08:00 IST (Asia/Kolkata), which is 02:30
+# UTC the same day since GitHub Actions cron always runs in UTC. Change
+# the cron line below if the real target time/timezone is different.
+on:
+  schedule:
+    - cron: "30 2 * * 4"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (no real emails sent)"
+        type: boolean
+        default: true
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Send newsletter
+        env:
+          NEWSLETTER_DATA_SOURCE: api
+          NEWSLETTER_DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
+          HERCULES_API_BASE: ${{ secrets.HERCULES_API_BASE }}
+          HERCULES_API_KEY: ${{ secrets.HERCULES_API_KEY }}
+          POSEIDON_API_BASE: ${{ secrets.POSEIDON_API_BASE }}
+          POSEIDON_API_KEY: ${{ secrets.POSEIDON_API_KEY }}
+          ESP_API_KEY: ${{ secrets.ESP_API_KEY }}
+          FROM_EMAIL: ${{ secrets.FROM_EMAIL }}
+          FROM_NAME: ${{ secrets.FROM_NAME }}
+          NEWSLETTER_ILLUSTRATION_MODE: ${{ secrets.NEWSLETTER_ILLUSTRATION_MODE }}
+          BRAND_ILLUSTRATION_ASSET_URL: ${{ secrets.BRAND_ILLUSTRATION_ASSET_URL }}
+        run: python3 send.py
+
+      - name: Upload run log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: newsletter-run-log
+          path: logs/
+          retention-days: 90
+
+      - name: Commit sent-issue archive
+        if: ${{ (github.event_name == 'schedule') || (github.event_name == 'workflow_dispatch' && inputs.dry_run == false) }}
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Archive sent newsletter issue"
+          file_pattern: "content/sent/*.json"

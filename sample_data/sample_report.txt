@@ -1,0 +1,42 @@
+HERCULES INTERNAL STUDY: Snack Packaging Preferences, Urban India
+Panel: SuperJ verified respondents, n=1,240, metros + tier 2 cities
+Fielded: September 2026
+
+OBJECTIVES
+Understand how packaging format affects purchase intent and perceived
+freshness for a mid-range namkeen snack brand considering a switch from
+foil pouches to resealable stand-up pouches.
+
+KEY FINDINGS
+
+1. 71% of respondents said a resealable pack would make them trust the
+   snack was "fresher," even when told the product inside was identical.
+   This effect held across all age groups but was strongest among
+   respondents aged 25-34 (79%).
+
+2. Counterintuitively, price sensitivity did not predict this effect.
+   Respondents in the lowest income bracket were just as likely (68%) as
+   the highest bracket (73%) to associate resealability with freshness.
+   The team expected a stronger effect among higher income respondents.
+
+3. 54% of respondents said they had thrown away a partially finished
+   packet of a similar snack in the last month because it "felt stale"
+   after opening, even without tasting it first. This suggests a
+   meaningful share of category waste is driven by packaging perception
+   rather than actual product spoilage.
+
+4. When shown two identical snacks side by side, one in foil and one in
+   a resealable pouch, 62% picked the resealable pack as the one they'd
+   buy again, and 44% said they'd pay a small premium for it, with a
+   median acceptable premium of 8%.
+
+5. Respondents who described themselves as "health conscious" were no
+   more or less likely to value resealability than others, suggesting
+   this is a general packaging preference rather than a health-driven
+   one.
+
+METHODOLOGY NOTE
+Respondents were shown side by side product images and asked forced
+choice and Likert scale questions. Standard SuperJ panel weighting
+applied. Margin of error approximately 2.8 percentage points at 95%
+confidence.
