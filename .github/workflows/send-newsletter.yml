@@ -1,11 +1,18 @@
 name: Send weekly newsletter
 
-# Assumed: "Thursday morning" = 08:00 IST (Asia/Kolkata), which is 02:30
-# UTC the same day since GitHub Actions cron always runs in UTC. Change
-# the cron line below if the real target time/timezone is different.
+# SAFETY: all automatic triggers are OFF by explicit request (2026-09-24).
+# This workflow currently only runs when a human clicks "Run workflow"
+# in the Actions tab, AND even then it will not send until the
+# `production-send` environment approval gate below is granted -- see
+# README "Approval gate" for one-time setup. Nothing sends unattended.
+#
+# The old schedule (Thursday 08:00 IST / 02:30 UTC) is kept below,
+# commented out, for reference. Do not uncomment it without the user's
+# explicit go-ahead, and only after the approval gate has been set up
+# and tested at least once via manual dispatch.
+# schedule:
+#   - cron: "30 2 * * 4"
 on:
-  schedule:
-    - cron: "30 2 * * 4"
   workflow_dispatch:
     inputs:
       dry_run:
@@ -16,6 +23,11 @@ on:
 jobs:
   send:
     runs-on: ubuntu-latest
+    # Requires a "production-send" environment configured in
+    # Settings -> Environments with "Required reviewers" turned on --
+    # see README "Approval gate". Without that one-time setup, this key
+    # is a no-op and does NOT gate anything by itself.
+    environment: production-send
     steps:
       - uses: actions/checkout@v4
 
@@ -29,7 +41,7 @@ jobs:
       - name: Send newsletter
         env:
           NEWSLETTER_DATA_SOURCE: api
-          NEWSLETTER_DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
+          NEWSLETTER_DRY_RUN: ${{ inputs.dry_run }}
           HERCULES_API_BASE: ${{ secrets.HERCULES_API_BASE }}
           HERCULES_API_KEY: ${{ secrets.HERCULES_API_KEY }}
           POSEIDON_API_BASE: ${{ secrets.POSEIDON_API_BASE }}
@@ -50,7 +62,7 @@ jobs:
           retention-days: 90
 
       - name: Commit sent-issue archive
-        if: ${{ (github.event_name == 'schedule') || (github.event_name == 'workflow_dispatch' && inputs.dry_run == false) }}
+        if: ${{ inputs.dry_run == false }}
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "Archive sent newsletter issue"
