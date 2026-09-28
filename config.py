@@ -8,6 +8,33 @@ credentials in this file.
 """
 
 import os
+import re
+
+
+def _load_dotenv(path: str = ".env") -> None:
+    """
+    Minimal .env reader for local runs (no python-dotenv dependency).
+    Real environment variables always win, so GitHub Actions secrets are
+    never overridden. Empty values are skipped so a blank KEY= line falls
+    back to the default below instead of becoming "". Trailing
+    "  # comment" is stripped; a value starting with # (e.g. a hex color)
+    is kept.
+    """
+    if not os.path.exists(path):
+        return
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            key = key.strip()
+            value = re.sub(r"\s+#.*$", "", value).strip().strip('"').strip("'")
+            if value and key not in os.environ:
+                os.environ[key] = value
+
+
+_load_dotenv()
 
 # --- Data source mode -------------------------------------------------
 # "api"    -> queries the hercules.works DB directly through the live API.
@@ -32,6 +59,27 @@ SAMPLE_RECIPIENTS_PATH = os.environ.get(
     "SAMPLE_RECIPIENTS_PATH", "sample_data/sample_recipients.json"
 )
 
+# --- External personnel list (separate from hercules.works users) -----
+# A second recipient source: a CSV of contacts across many companies,
+# filtered down to top-level personnel only (everyone in the CSV does
+# NOT get the newsletter -- only those whose title matches below). This
+# is unrelated to the hercules.works user pull, which stays API-only.
+# TODO: confirm the real column name(s) once the actual file is shared --
+# _get_top_level_personnel_from_csv() in data_sources.py checks a few
+# common header spellings automatically (title/designation/role/job_title),
+# but an unusual column name will need adding there.
+INCLUDE_PERSONNEL_CSV = os.environ.get("NEWSLETTER_INCLUDE_PERSONNEL_CSV", "true").lower() == "true"
+PERSONNEL_CSV_PATH = os.environ.get("PERSONNEL_CSV_PATH", "sample_data/sample_personnel.csv")
+
+# Case-insensitive substring match against the title/designation column.
+# Tune this list once you see the real title values in the file -- it's
+# deliberately broad rather than an exact-match list.
+TOP_LEVEL_TITLE_KEYWORDS = [
+    "founder", "co-founder", "ceo", "cto", "cfo", "coo", "cmo", "cxo",
+    "chief", "president", "vp", "vice president", "director",
+    "managing director", "head of", "partner", "owner", "principal",
+]
+
 # The human-approved weekly content file. You feed the week's report to
 # Claude in chat (see .claude/skills/weekly-newsletter/SKILL.md), review
 # the rendered preview, and once you approve it Claude saves the final
@@ -41,6 +89,12 @@ WEEKLY_CONTENT_PATH = os.environ.get(
     "WEEKLY_CONTENT_PATH", "content/weekly_content.json"
 )
 
+# Where the CTA button points when an issue's weekly_content.json has no
+# "cta_url" of its own. Each issue should normally carry its own
+# UTM-tagged link (the user supplies it; clicks are tracked on their
+# external analytics platform, not in this pipeline).
+DEFAULT_CTA_URL = os.environ.get("NEWSLETTER_CTA_URL", "https://hercules.works/")
+
 # Every non-dry-run send archives a dated copy of what was actually sent
 # into this directory, so git history alone tells you what went out and
 # when even after weekly_content.json is overwritten by the next issue.
@@ -48,29 +102,52 @@ SENT_ARCHIVE_DIR = "content/sent"
 
 # --- Illustration settings ---------------------------------------------
 # "placeholder"  -> builds a simple inline-SVG stat graphic from the
-#                   content's hero_stat_value / hero_stat_label. Works
-#                   today, no external dependency. This is the current
-#                   mode -- see illustrations.py.
-# "brand_asset"  -> uses the real hercules.works blog illustration/design
-#                   system once it's handed off. Switch to this mode when
-#                   that design is ready; nothing else needs to change.
+#                   content's hero_stat_value / hero_stat_label, styled
+#                   with the real hercules.works brand tokens below. This
+#                   is the current mode -- see illustrations.py. The
+#                   COLORS are real; the graphic itself (a generated stat
+#                   ring) is still a stand-in for real illustration
+#                   artwork/icons from the design team.
+# "brand_asset"  -> uses a hosted hercules.works illustration image
+#                   instead of the generated graphic. Switch to this mode
+#                   once real per-issue artwork exists; nothing else
+#                   needs to change.
 ILLUSTRATION_MODE = os.environ.get("NEWSLETTER_ILLUSTRATION_MODE", "placeholder")
 
-# Only used in "brand_asset" mode: a URL (or set of URLs, once the real
-# design is known) to the hercules.works illustration asset for this
-# week's issue. Left blank until the design handoff happens.
+# Only used in "brand_asset" mode: a URL to the hercules.works
+# illustration asset for this week's issue. Left blank until real
+# per-issue artwork exists.
 BRAND_ILLUSTRATION_ASSET_URL = os.environ.get("BRAND_ILLUSTRATION_ASSET_URL", "")
 
-# Placeholder brand accent color for the interim illustration. Replace
-# with the real hercules.works blog brand token once that design is
-# delivered (see README "Pending: real brand design").
-BRAND_ACCENT_COLOR = os.environ.get("BRAND_ACCENT_COLOR", "#5B47F5")
+# --- Brand tokens ---------------------------------------------------------
+# Pulled directly from the hercules.works blog page component
+# (app/blog/[slug]/page.tsx) so the email reads as the same product, not
+# a reskinned generic template. Override any of these via env var if the
+# brand system moves.
+BRAND_ACCENT_COLOR = os.environ.get("BRAND_ACCENT_COLOR", "#4F46E5")       # checkmarks, CTA button
+BRAND_LINK_COLOR = os.environ.get("BRAND_LINK_COLOR", "#5050F5")           # inline links, matches the blog's "hercules.works" link
+BRAND_HEADING_COLOR = os.environ.get("BRAND_HEADING_COLOR", "#18181B")     # headings, the blog's near-black
+BRAND_BODY_COLOR = os.environ.get("BRAND_BODY_COLOR", "#52525B")           # body copy
+BRAND_MUTED_COLOR = os.environ.get("BRAND_MUTED_COLOR", "#8F8F8F")         # eyebrow / meta text
+BRAND_BORDER_COLOR = os.environ.get("BRAND_BORDER_COLOR", "#E4E4E7")       # hairlines, matches the blog's dividers
+BRAND_CALLOUT_BG = os.environ.get("BRAND_CALLOUT_BG", "#F0F4FF")           # the blog's "Key Takeaways" box background
+BRAND_CALLOUT_BORDER = os.environ.get("BRAND_CALLOUT_BORDER", "#C7D7FE")   # the blog's "Key Takeaways" box border
+BRAND_FOOTER_BG = os.environ.get("BRAND_FOOTER_BG", "#F9FAFB")             # the blog's "About Hercules" box background
 
 # --- ESP (email service provider) settings -----------------------------
-ESP_PROVIDER = os.environ.get("ESP_PROVIDER", "sendgrid")  # sendgrid | mailchimp
-ESP_API_KEY = os.environ.get("ESP_API_KEY", "")
+ESP_PROVIDER = os.environ.get("ESP_PROVIDER", "sendgrid")  # gmail_smtp | sendgrid | brevo | mailchimp
+# gmail_smtp is the current option for team test sends (see TESTING.md).
+# sendgrid is intended for the real production send once the recipient
+# API + personnel CSV are wired up. brevo is a free, no-DNS alternative
+# to gmail_smtp if its sending limits ever aren't enough for testing.
+# mailchimp is not wired up yet (see esp.py).
+ESP_API_KEY = os.environ.get("ESP_API_KEY", "")  # sendgrid / brevo only
 FROM_EMAIL = os.environ.get("FROM_EMAIL", "newsletter@hercules.works")
 FROM_NAME = os.environ.get("FROM_NAME", "Hercules.works")
+# gmail_smtp only -- a 16-char app password, not your Google account
+# password. FROM_EMAIL must be the exact Gmail/Workspace address it
+# belongs to. See TESTING.md.
+GMAIL_APP_PASSWORD = os.environ.get("GMAIL_APP_PASSWORD", "")
 SUBJECT_PREFIX = ""  # keep empty; subject line should be the stat itself
 
 # --- Segmentation -------------------------------------------------------
@@ -99,6 +176,20 @@ BANNED_PHRASES = [
     "in this article", "in this newsletter", "let's explore",
     "it's important to note", "when it comes to",
 ]
+
+# --- Team test sends (test_send.py) ---------------------------------------
+# Test sends go ONLY to the people in TEST_RECIPIENTS_PATH, never to the
+# hercules.works pull or the personnel CSV. Every address must be at one
+# of TEST_ALLOWED_DOMAINS or the whole test send is refused -- this is
+# what stops a typo'd or pasted-in customer address getting a test email.
+TEST_RECIPIENTS_PATH = os.environ.get("TEST_RECIPIENTS_PATH", "test_recipients.json")
+TEST_ALLOWED_DOMAINS = [
+    d.strip().lower().lstrip("@")
+    for d in os.environ.get("TEST_ALLOWED_DOMAINS", "").split(",")
+    if d.strip()
+]
+TEST_MAX_RECIPIENTS = int(os.environ.get("TEST_MAX_RECIPIENTS", "25"))
+TEST_SUBJECT_PREFIX = "[TEST] "
 
 # --- Operational ----------------------------------------------------------
 DRY_RUN = os.environ.get("NEWSLETTER_DRY_RUN", "true").lower() == "true"

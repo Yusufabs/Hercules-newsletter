@@ -85,7 +85,14 @@ switch `ILLUSTRATION_MODE` to `brand_asset` and set
 Write the draft to `content/weekly_content.json` matching the schema in
 `sample_data/weekly_content.example.json` (title, hook,
 insight_paragraph, supporting_points, closing_line, source_study,
-hero_stat_value, hero_stat_label).
+hero_stat_value, hero_stat_label, cta_url).
+
+`cta_url` is the CTA button's link, and the user supplies it: a
+UTM-tagged URL they track on their own external analytics platform. Ask
+for it if they haven't given it, and paste it in exactly as given; never
+invent or edit UTM parameters. Left blank, the button falls back to
+`config.DEFAULT_CTA_URL`, which carries no UTM tags, so don't hand off
+an issue without it unless the user says to.
 
 Then render an actual preview so the user sees exactly what a recipient
 would see, not a text description of it:
@@ -122,12 +129,62 @@ Run the verification gate before telling the user this issue is ready:
 NEWSLETTER_DATA_SOURCE=sample NEWSLETTER_DRY_RUN=true python3 send.py
 ```
 
-This is a dry run -- it pulls recipients, renders, and runs every check
-in `verify.py` (word count, house style, required fields, link
-resolution) without sending anything. If it passes, tell the user
-exactly that, and remind them the actual send happens automatically via
-GitHub Actions next Thursday morning against whatever is currently
+This is a dry run -- it pulls recipients (hercules.works users plus
+top-level personnel from the external CSV, merged -- see
+`data_sources.py`), renders, and runs every check in `verify.py` (word
+count, house style, required fields, link resolution) without sending
+anything. Both recipient audiences get the identical rendered email --
+this step doesn't branch content by audience. If it passes, tell the
+user exactly that, including the recipient count and where the dry-run
+delivery report landed (`logs/delivery_report_*_dryrun.csv`, the
+exact list of who this issue would go to), and remind them the actual send happens automatically
+via GitHub Actions next Thursday morning against whatever is currently
 committed in `content/weekly_content.json` -- so the last thing to do is
 commit (and push, if they want it live before Thursday) that file. If
 anything fails, fix the draft and rerun this step; don't hand off a
 failing draft.
+
+## 7b. Optional: team test send
+
+If the user wants to see the draft in real inboxes first, use
+`test_send.py` (full flow and checklist in `TESTING.md`). Always run it
+without `--send` first and show the user who it would go to. Only add
+`--send` when the user has asked for a test send in this conversation;
+that request covers that one test send, not later ones. Test sends go
+only to `test_recipients.json`, limited to `TEST_ALLOWED_DOMAINS`, so
+this is the one real send this skill may run. Suggest `--cta-url` with
+a separate test UTM link so team clicks don't count toward the real
+issue's campaign. Afterwards, ask the user what the team saw against
+the TESTING.md checklist and fix whatever broke.
+
+## 8. Draft the paired blog post
+
+Same week, same underlying finding, longer form. Once the newsletter
+content is approved, use a marketing content skill (e.g.
+`marketing:content-creation`) to draft a full blog post from the same
+report, matching the hercules.works blog's content shape (as used in
+`app/blog/[slug]/page.tsx`): a title, an SEO title/description/keyword
+set (matching the `blogMetaData` shape at the top of that file), a
+`description` (the lead paragraph), 3-5 `keyTakeaways`, a handful of
+`faqs` ({q, a} pairs), and the full `content` body -- longer and more
+thorough than the newsletter, since it doesn't have the 2 minute read
+constraint. Save the draft to `content/blog/<slug>.md` (front matter for
+title/description/keywords/keyTakeaways/faqs, body below) so it's easy
+to review and then hand-paste into `blogData.ts` and the `blogMetaData`
+array -- this project doesn't have write access to the actual
+hercules.works site repo. Show the draft to the user the same way as the
+newsletter preview: don't assume approval, iterate on request.
+
+## Guardrail: never send for real without explicit approval
+
+Every command in this skill uses `NEWSLETTER_DRY_RUN=true`. That's not
+incidental -- do not run `send.py` (or anything that calls `esp.py`)
+with dry-run off, apart from the team-only `test_send.py --send`
+described in 7b, or otherwise cause a real email to go out, as part of
+following this skill. The only real sends happen through the GitHub
+Actions workflow's manual `workflow_dispatch`, itself gated behind the
+`production-send` environment's required-reviewer approval (see README
+"Approval gate"). All automatic (scheduled) triggers are currently
+disabled by explicit request -- do not re-enable the `schedule:` block
+in `.github/workflows/send-newsletter.yml` unless the user explicitly
+asks for it back.

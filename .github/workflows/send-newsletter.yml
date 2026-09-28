@@ -62,7 +62,9 @@ jobs:
           retention-days: 90
 
       - name: Commit sent-issue archive
-        if: ${{ inputs.dry_run == false }}
+        # always(): still archive after a partial send where some
+        # recipients failed (send.py exits non-zero in that case).
+        if: ${{ always() && inputs.dry_run == false }}
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "Archive sent newsletter issue"

@@ -1,0 +1,71 @@
+{
+  "subject": "Ask a question. Get a real answer. Today.",
+  "greeting_fallback": "there",
+  "headline_line1": "What's new on",
+  "headline_line2_italic": "Hercules.works",
+  "tagline": "Faster paths to <strong>insight</strong>, more ways to <strong>ask</strong>.",
+  "intro_paragraphs": [
+    "New here? Hercules gets you real consumer answers in minutes, not weeks. Type a question, get real people's answers, live. No fieldwork agency, no six-week wait, no jargon.",
+    "Been here a while? You already knew that. What you don't know yet is what we just shipped. It's faster, sharper, and honestly, a lot more fun to use. Here's what's new."
+  ],
+  "sections": [
+    {
+      "heading": "Quick Insights: ask it, don't build it",
+      "paragraphs": [
+        "Got a burning question about your customers, your category, or honestly anything? Skip the survey builder. Type one sharp question in plain English and get real answers from real people, live. No setup, no fifteen field form standing between you and an answer.",
+        "Try something like \"Is Virat Kohli better than MS Dhoni?\" and watch results roll in."
+      ],
+      "cta_label": "Try Quick Insights free",
+      "cta_url": "https://hercules.works/?utm_source=newsletter&utm_medium=email&utm_campaign=whats_new_2026_09&utm_content=quick_insights"
+    },
+    {
+      "heading": "Guided Workflow: research, without the research degree",
+      "paragraphs": [
+        "Got a bigger question, like whether a price change will land, or how your brand health really looks? Guided Workflow walks you from objective to launch, step by step. Pick your use case (product testing, brand health, pricing, whatever it is) and Hercules recommends the right metrics before generating a survey that's ready to send.",
+        "<strong>Also new: Routing Logic.</strong> Build smart branching right into your survey: redirects, terminations, skip logic, and custom paths based on how people answer. Less noise, less drop off, more data you can actually use."
+      ],
+      "cta_label": "Explore Guided Workflow",
+      "cta_url": "https://hercules.works/?utm_source=newsletter&utm_medium=email&utm_campaign=whats_new_2026_09&utm_content=guided_workflow"
+    }
+  ],
+  "qualitative": {
+    "heading": "Need the why, not just the what?",
+    "intro": "Hercules now runs bespoke moderated research for teams that need to understand the reasoning behind consumer behaviour, not just the numbers.",
+    "items": [
+      "<strong>Focus Group Discussions:</strong> structured roundtables with 8 to 10 participants, guided by researchers.",
+      "<strong>In-Depth Interviews (IDIs):</strong> one on one expert moderated sessions for deep qualitative discovery.",
+      "<strong>Ethnography &amp; IHUTs:</strong> in home testing and direct behavioural observation.",
+      "<strong>Online Communities:</strong> multi week digital discussion boards with ongoing tracking.",
+      "<strong>Co-creation Workshops:</strong> facilitated sessions with consumers and brand teams.",
+      "<strong>Moderated Web-Call Interviews:</strong> 45 to 60 minute moderated calls via SuperJ with discussion guides and recordings."
+    ],
+    "cta_label": "Talk to us about enterprise research",
+    "cta_url": "https://hercules.works/?utm_source=newsletter&utm_medium=email&utm_campaign=whats_new_2026_09&utm_content=qualitative_research"
+  },
+  "pricing": {
+    "heading": "Start free. Pay only for what you use.",
+    "free_trial_name": "Free Trial",
+    "free_trial_price": "₹0",
+    "free_trial_body": "Reach your first 30 respondents for free. No card required. Full access to core research tools and unlimited SuperJ links to friends and family, the easiest way to see Hercules in action before you commit to anything.",
+    "tiers": [
+      {
+        "name": "Plus",
+        "price": "₹150 per respondent",
+        "body": "Pay as you go. The full 2 crore+ verified panel, 1,000+ targeting attributes, no monthly commitment."
+      },
+      {
+        "name": "Pro",
+        "price": "₹120 per respondent",
+        "body": "Everything in Plus, 20% cheaper, in prepaid bundles. Priority support, and your data never trains our models."
+      },
+      {
+        "name": "Enterprise",
+        "price": "Custom pricing",
+        "body": "A dedicated team shapes strategy, targeting, and deployment around your specific needs."
+      }
+    ],
+    "cta_label": "See full pricing",
+    "cta_url": "https://hercules.works/?utm_source=newsletter&utm_medium=email&utm_campaign=whats_new_2026_09&utm_content=pricing"
+  },
+  "signoff": "Happy researching :)"
+}

@@ -1,0 +1,4 @@
+[
+  {"email": "you@hercules.works", "name": "You", "segment": "active"},
+  {"email": "teammate@hercules.works", "name": "Teammate", "segment": "dormant"}
+]

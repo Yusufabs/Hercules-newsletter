@@ -21,12 +21,18 @@ sourced differently on purpose:
    with Claude, not something to automate away.
 """
 
+import csv
 import json
 import datetime as dt
 from dataclasses import dataclass
 from typing import List
 
 import config
+
+# Header spellings we'll accept for the personnel CSV's job-title column,
+# checked in order. Add the real one here once the actual file is shared
+# if it uses something else.
+_TITLE_COLUMN_CANDIDATES = ("title", "designation", "role", "job_title", "position")
 
 
 @dataclass
@@ -35,6 +41,7 @@ class Recipient:
     name: str
     last_login: dt.date
     is_dormant: bool
+    source: str = "hercules"  # "hercules" | "personnel_csv" -- for send-log breakdowns only, doesn't affect content
 
 
 @dataclass
@@ -47,15 +54,33 @@ class WeeklyContent:
     source_study: str              # study name, shown in the footer
     hero_stat_value: str = ""      # the headline number, e.g. "54%" -- drives the illustration
     hero_stat_label: str = ""      # short caption for that number, e.g. "tossed a snack that wasn't spoiled"
+    cta_url: str = ""              # this issue's UTM-tagged CTA link; blank falls back to config.DEFAULT_CTA_URL
 
 
 def get_recipients() -> List[Recipient]:
+    """
+    Merges two independent recipient sources into one send list:
+      1. hercules.works users (DATA_SOURCE_MODE=api|sample) -- everyone.
+      2. The external personnel CSV -- top-level titles only, everyone
+         else in that file is deliberately excluded.
+    Both get the exact same newsletter content; this only affects who's
+    on the list. Deduplicated by email in case someone appears in both.
+    """
     if config.DATA_SOURCE_MODE == "api":
-        return _get_recipients_from_api()
+        recipients = _get_recipients_from_api()
     elif config.DATA_SOURCE_MODE == "sample":
-        return _get_recipients_from_sample()
+        recipients = _get_recipients_from_sample()
     else:
         raise ValueError(f"Unknown DATA_SOURCE_MODE: {config.DATA_SOURCE_MODE}")
+
+    if config.INCLUDE_PERSONNEL_CSV:
+        seen = {r.email.lower() for r in recipients}
+        for person in _get_top_level_personnel_from_csv():
+            if person.email.lower() not in seen:
+                recipients.append(person)
+                seen.add(person.email.lower())
+
+    return recipients
 
 
 def get_weekly_content() -> WeeklyContent:
@@ -76,7 +101,71 @@ def get_weekly_content() -> WeeklyContent:
         source_study=data["source_study"],
         hero_stat_value=data.get("hero_stat_value", ""),
         hero_stat_label=data.get("hero_stat_label", ""),
+        cta_url=data.get("cta_url", "").strip(),
     )
+
+
+# --- External personnel CSV (top-level titles only) ---------------------
+
+def _find_title_column(fieldnames) -> str:
+    lower_map = {name.lower().strip(): name for name in fieldnames}
+    for candidate in _TITLE_COLUMN_CANDIDATES:
+        if candidate in lower_map:
+            return lower_map[candidate]
+    raise ValueError(
+        f"Couldn't find a job-title column in {config.PERSONNEL_CSV_PATH} "
+        f"(looked for {', '.join(_TITLE_COLUMN_CANDIDATES)} among headers "
+        f"{list(fieldnames)}). Add the real column name to "
+        f"_TITLE_COLUMN_CANDIDATES in data_sources.py."
+    )
+
+
+def _is_top_level(title: str) -> bool:
+    lowered = title.lower()
+    return any(keyword in lowered for keyword in config.TOP_LEVEL_TITLE_KEYWORDS)
+
+
+def _get_top_level_personnel_from_csv() -> List[Recipient]:
+    """
+    Reads the external personnel CSV and returns only rows whose title
+    matches config.TOP_LEVEL_TITLE_KEYWORDS -- everyone else in the file
+    is intentionally skipped. Expects at minimum an email column and a
+    title-ish column (see _TITLE_COLUMN_CANDIDATES); name and company are
+    used if present.
+
+    Missing file is treated as "no personnel this week" rather than a
+    hard failure, since this list may not always be refreshed alongside
+    the hercules.works pull.
+    """
+    try:
+        f = open(config.PERSONNEL_CSV_PATH, newline="", encoding="utf-8")
+    except FileNotFoundError:
+        return []
+
+    with f:
+        reader = csv.DictReader(f)
+        if not reader.fieldnames:
+            return []
+        title_col = _find_title_column(reader.fieldnames)
+
+        recipients = []
+        for row in reader:
+            title = (row.get(title_col) or "").strip()
+            if not title or not _is_top_level(title):
+                continue
+            email = (row.get("email") or "").strip()
+            if not email:
+                continue
+            recipients.append(
+                Recipient(
+                    email=email,
+                    name=(row.get("name") or "").strip(),
+                    last_login=dt.date.today(),  # no login concept for external contacts
+                    is_dormant=False,
+                    source="personnel_csv",
+                )
+            )
+        return recipients
 
 
 # --- Sample implementation (recipients only, local dry runs) ------------

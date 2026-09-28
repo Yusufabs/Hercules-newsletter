@@ -1,0 +1,43 @@
+{
+  "subject": "Subject line for this issue",
+  "greeting_fallback": "there",
+  "headline_line1": "What's new on",
+  "headline_line2_italic": "Hercules.works",
+  "tagline": "A short tagline, inline <strong>bold</strong> tags allowed.",
+  "intro_paragraphs": [
+    "First intro paragraph.",
+    "Second intro paragraph."
+  ],
+  "sections": [
+    {
+      "heading": "Feature name: a short benefit-led subhead",
+      "paragraphs": [
+        "What it does and why it matters.",
+        "A second paragraph, e.g. a related feature folded in with <strong>a bold lead-in</strong>."
+      ],
+      "cta_label": "Button text",
+      "cta_url": "https://hercules.works/?utm_source=newsletter&utm_medium=email&utm_campaign=example&utm_content=feature_slug"
+    }
+  ],
+  "qualitative": {
+    "heading": "Section heading",
+    "intro": "One line of context above the checklist.",
+    "items": [
+      "<strong>Item name:</strong> description."
+    ],
+    "cta_label": "Button text",
+    "cta_url": "https://hercules.works/?utm_source=newsletter&utm_medium=email&utm_campaign=example&utm_content=qualitative"
+  },
+  "pricing": {
+    "heading": "Section heading",
+    "free_trial_name": "Free Trial",
+    "free_trial_price": "₹0",
+    "free_trial_body": "What the free tier includes.",
+    "tiers": [
+      {"name": "Plus", "price": "₹150 per respondent", "body": "One line describing this tier."}
+    ],
+    "cta_label": "Button text",
+    "cta_url": "https://hercules.works/?utm_source=newsletter&utm_medium=email&utm_campaign=example&utm_content=pricing"
+  },
+  "signoff": "Sign-off line"
+}
